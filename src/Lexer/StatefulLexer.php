@@ -42,7 +42,7 @@ class StatefulLexer extends AbstractLexer
      * @param string $type The token type.
      * @param string|null $value The value to be recognized.
      */
-    public function token(string $type, string $value = null): StatefulLexer
+    public function token(string $type, ?string $value = null): StatefulLexer
     {
         if ($this->stateBeingBuilt === null) {
             throw new LogicException("Define a lexer state first.");

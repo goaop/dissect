@@ -28,7 +28,7 @@ class Parser implements P\Parser
      * @param Grammar $grammar The grammar.
      * @param array|null $parseTable If given, the parser doesn't have to analyze the grammar.
      */
-    public function __construct(Grammar $grammar, array $parseTable = null)
+    public function __construct(Grammar $grammar, ?array $parseTable = null)
     {
         $this->grammar = $grammar;
 

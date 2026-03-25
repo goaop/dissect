@@ -32,7 +32,7 @@ class SimpleLexer extends AbstractLexer
      * @param string $type The token type.
      * @param string|null $value The value to be recognized.
      */
-    public function token(string $type, string $value = null): self
+    public function token(string $type, ?string $value = null): self
     {
         if ($value) {
             $this->recognizers[$type] = new SimpleRecognizer($value);
