@@ -2,7 +2,10 @@ name: PHP Tests
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened]
   push:
+    branches:
+      - master
 
 permissions:
   contents: read
@@ -14,7 +17,7 @@ jobs:
     strategy:
       matrix:
         operating-system: [ ubuntu-latest ]
-        php-version: ['8.2', '8.3']
+        php-version: ['8.4', '8.5']
 
     name: PHP ${{ matrix.php-version }} test on ${{ matrix.operating-system }}
 
@@ -45,7 +48,7 @@ jobs:
         run: composer install --prefer-dist --no-progress
 
       - name: PHPUnit Tests
-        run: vendor/bin/phpunit --coverage-clover ./tests/coverage.xml
+        run: vendor/bin/phpunit --display-all-issues --coverage-clover ./tests/coverage.xml
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
