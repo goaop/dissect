@@ -81,10 +81,11 @@ use Dissect\Parser\LALR1\Parser;
 
 // 1. Define a lexer
 $lexer = new SimpleLexer();
-$lexer->token('INT',   '/[0-9]+/')
+$lexer->regex('INT',   '/[0-9]+/')
       ->token('PLUS',  '+')
       ->token('MINUS', '-')
-      ->skip('WS',     '/\s+/');
+      ->regex('WS',    '/\s+/')
+      ->skip('WS');
 
 // 2. Define a grammar
 $grammar = new Grammar();

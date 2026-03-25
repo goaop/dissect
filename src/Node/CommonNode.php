@@ -17,7 +17,7 @@ class CommonNode implements Node
     /**
      * @var array<int|string, Node>
      */
-    protected array $nodes;
+    protected array $children;
 
     /**
      * @var array<string, mixed>
@@ -25,18 +25,13 @@ class CommonNode implements Node
     protected array $attributes;
 
     /**
-     * @var array<string, Node>
-     */
-    protected array $children = [];
-
-    /**
      * @param array<string, mixed> $attributes The attributes of this node.
-     * @param array<int|string, Node> $nodes The children of this node.
+     * @param array<int|string, Node> $children The children of this node.
      */
-    public function __construct(array $attributes = [], array $nodes = [])
+    public function __construct(array $attributes = [], array $children = [])
     {
         $this->attributes = $attributes;
-        $this->nodes = $nodes;
+        $this->children = $children;
     }
 
     /**
@@ -44,7 +39,7 @@ class CommonNode implements Node
      */
     public function getNodes(): array
     {
-        return $this->nodes;
+        return $this->children;
     }
 
     /**
@@ -52,7 +47,7 @@ class CommonNode implements Node
      */
     public function hasNode(string $name): bool
     {
-        return isset($this->nodes[$name]);
+        return isset($this->children[$name]);
     }
 
     /**
@@ -133,7 +128,7 @@ class CommonNode implements Node
     }
 
     /**
-     * @return ArrayIterator<string, Node>
+     * @return ArrayIterator<int|string, Node>
      */
     public function getIterator(): ArrayIterator
     {

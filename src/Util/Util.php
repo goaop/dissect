@@ -50,20 +50,16 @@ abstract class Util
     }
 
     /**
-     * Extracts a substring of a UTF-8 string.
+     * Extracts a substring using byte offsets, consistent with stringLength().
      *
      * @param string $str The string to extract the substring from.
-     * @param int $position The position from which to start extracting.
-     * @param int|null $length The length of the substring.
+     * @param int $position The byte position from which to start extracting.
+     * @param int|null $length The byte length of the substring.
      *
      * @return string The substring.
      */
     public static function substring(string $str, int $position, ?int $length = null): string
     {
-        if ($length === null) {
-            $length = self::stringLength($str);
-        }
-
-        return mb_substr($str, $position, $length, 'UTF-8');
+        return substr($str, $position, $length);
     }
 }
