@@ -14,7 +14,7 @@ interface Token
     /**
      * Returns the token type.
      */
-    public function getType(): mixed;
+    public function getType(): string;
 
     /**
      * Returns the token value.

@@ -11,6 +11,7 @@ use Dissect\Parser\LALR1\Dumper\DebugTableDumper;
 use Dissect\Parser\LALR1\Dumper\ProductionTableDumper;
 use Dissect\Parser\Grammar;
 use Symfony\Component\Console\Command\Command;
+use Symfony\Component\Console\Helper\FormatterHelper;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -19,7 +20,7 @@ use ReflectionClass;
 
 class DissectCommand extends Command
 {
-    protected function configure()
+    protected function configure(): void
     {
         $this
             ->setName('dissect')
@@ -31,24 +32,24 @@ class DissectCommand extends Command
             ->setHelp(<<<EOT
                 Analyzes the given grammar and, if successful, exports the parse table to a PHP
                 file.
-                
+
                 By default, the output directory is taken to be the one in which the grammar is
                 defined. You can change that with the <info>--output-dir</info> option:
-                
+
                  <info>--output-dir=../some/other/dir</info>
-                
+
                 The parse table is by default written with minimal whitespace to make it compact.
                 If you wish to inspect the table manually, you can export it in a readable and
                 well-commented way with the <info>--debug</info> option.
-                
+
                 If you wish to inspect the handle-finding automaton for your grammar (perhaps
                 to aid with grammar debugging), use the <info>--dfa</info> option. When in use, Dissect
                 will create a file with the automaton exported as a Graphviz graph
                 in the output directory.
-                
+
                 Additionally, you can use the <info>--state</info> option to export only the specified
                 state and any relevant transitions:
-                
+
                  <info>--dfa --state=5</info>
                 EOT
             );
@@ -56,18 +57,21 @@ class DissectCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $class = strtr(
-            $input->getArgument('grammar-class'),
-            '/',
-            '\\'
-        );
-        $formatter = $this->getHelperSet()->get('formatter');
+        $grammarClass = $input->getArgument('grammar-class');
+        if (!is_string($grammarClass)) {
+            $output->writeln('<error>grammar-class argument must be a string</error>');
+            return 1;
+        }
+
+        $class = strtr($grammarClass, '/', '\\');
+
+        /** @var FormatterHelper $formatter */
+        $formatter = $this->getHelper('formatter');
 
         $output->writeln('<info>Analyzing...</info>');
         $output->writeln('');
 
         if (!class_exists($class)) {
-            /** @noinspection PhpPossiblePolymorphicInvocationInspection */
             $output->writeln([
                 $formatter->formatBlock(
                     sprintf('The class "%s" could not be found.', $class),
@@ -81,13 +85,27 @@ class DissectCommand extends Command
 
         $grammar = new $class();
 
-        if ($dir = $input->getOption('output-dir')) {
-            $cwd = rtrim(getcwd(), DIRECTORY_SEPARATOR);
+        if (!$grammar instanceof Grammar) {
+            $output->writeln('<error>The specified class must extend Grammar</error>');
+            return 1;
+        }
 
-            $outputDir = $cwd . DIRECTORY_SEPARATOR . $dir;
+        $outputDirOption = $input->getOption('output-dir');
+        if (is_string($outputDirOption)) {
+            $cwd = getcwd();
+            if ($cwd === false) {
+                $output->writeln('<error>Cannot determine current working directory</error>');
+                return 1;
+            }
+            $outputDir = rtrim($cwd, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $outputDirOption;
         } else {
             $refl = new ReflectionClass($class);
-            $outputDir = pathinfo($refl->getFileName(), PATHINFO_DIRNAME);
+            $fileName = $refl->getFileName();
+            if ($fileName === false) {
+                $output->writeln('<error>Cannot determine grammar file location</error>');
+                return 1;
+            }
+            $outputDir = pathinfo($fileName, PATHINFO_DIRNAME);
         }
 
         $analyzer = new Analyzer();
@@ -129,8 +147,7 @@ class DissectCommand extends Command
             } else {
                 $output->writeln('<info>Parse table written</info>');
             }
-        } catch(ConflictException $e) {
-            /** @noinspection PhpPossiblePolymorphicInvocationInspection */
+        } catch (ConflictException $e) {
             $output->writeln([
                 $formatter->formatBlock(
                     explode("\n", $e->getMessage()),
@@ -147,16 +164,16 @@ class DissectCommand extends Command
 
             $automatonDumper = new AutomatonDumper($automaton);
 
-            if ($input->getOption('state') === null) {
+            $stateOption = $input->getOption('state');
+            if ($stateOption === null) {
                 $output->writeln('<info>Exporting the DFA...</info>');
 
                 $dot = $automatonDumper->dump();
                 $file = 'automaton.dot';
             } else {
-                $state = (int)$input->getOption('state');
+                $state = is_string($stateOption) ? (int) $stateOption : 0;
 
                 if (!$automaton->hasState($state)) {
-                    /** @noinspection PhpPossiblePolymorphicInvocationInspection */
                     $output->writeln([
                         $formatter->formatBlock(
                             sprintf('The automaton has no state #%d', $state),
@@ -190,6 +207,9 @@ class DissectCommand extends Command
         return 0;
     }
 
+    /**
+     * @param array{state: int, lookahead: string, rule?: \Dissect\Parser\Rule, rules?: \Dissect\Parser\Rule[], resolution: int} $conflict
+     */
     protected function formatConflict(array $conflict): string
     {
         $type = $conflict['resolution'] === Grammar::SHIFT

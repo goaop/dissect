@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Dissect\Lexer;
 
+use Dissect\Lexer\Recognizer\Recognizer;
 use Dissect\Lexer\Recognizer\RegexRecognizer;
 use Dissect\Lexer\Recognizer\SimpleRecognizer;
 use Dissect\Util\Util;
@@ -18,9 +19,28 @@ use LogicException;
  */
 class StatefulLexer extends AbstractLexer
 {
-    protected array $states = [];
+    /**
+     * @var array<string, array<string, Recognizer>>
+     */
+    protected array $stateRecognizers = [];
+
+    /**
+     * @var array<string, array<string, mixed>>
+     */
+    protected array $stateActions = [];
+
+    /**
+     * @var array<string, list<mixed>>
+     */
+    protected array $stateSkipTokens = [];
+
+    /**
+     * @var list<string>
+     */
     protected array $stateStack = [];
+
     protected ?string $stateBeingBuilt = null;
+
     protected ?string $typeBeingBuilt = null;
 
     /**
@@ -38,11 +58,8 @@ class StatefulLexer extends AbstractLexer
      * Adds a new token definition. If given only one argument,
      * it assumes that the token type and recognized value are
      * identical.
-     *
-     * @param string $type The token type.
-     * @param string|null $value The value to be recognized.
      */
-    public function token(string $type, ?string $value = null): StatefulLexer
+    public function token(string $type, ?string $value = null): static
     {
         if ($this->stateBeingBuilt === null) {
             throw new LogicException("Define a lexer state first.");
@@ -52,10 +69,8 @@ class StatefulLexer extends AbstractLexer
             $value = $type;
         }
 
-        $this->states[$this->stateBeingBuilt]['recognizers'][$type] =
-            new SimpleRecognizer($value);
-
-        $this->states[$this->stateBeingBuilt]['actions'][$type] = self::NO_ACTION;
+        $this->stateRecognizers[$this->stateBeingBuilt][$type] = new SimpleRecognizer($value);
+        $this->stateActions[$this->stateBeingBuilt][$type] = self::NO_ACTION;
 
         $this->typeBeingBuilt = $type;
 
@@ -64,20 +79,15 @@ class StatefulLexer extends AbstractLexer
 
     /**
      * Adds a new regex token definition.
-     *
-     * @param string $type The token type.
-     * @param string $regex The regular expression used to match the token.
      */
-    public function regex(string $type, string $regex): AbstractLexer
+    public function regex(string $type, string $regex): static
     {
         if ($this->stateBeingBuilt === null) {
             throw new LogicException("Define a lexer state first.");
         }
 
-        $this->states[$this->stateBeingBuilt]['recognizers'][$type] =
-            new RegexRecognizer($regex);
-
-        $this->states[$this->stateBeingBuilt]['actions'][$type] = self::NO_ACTION;
+        $this->stateRecognizers[$this->stateBeingBuilt][$type] = new RegexRecognizer($regex);
+        $this->stateActions[$this->stateBeingBuilt][$type] = self::NO_ACTION;
 
         $this->typeBeingBuilt = $type;
 
@@ -89,41 +99,35 @@ class StatefulLexer extends AbstractLexer
      *
      * @param mixed $types Unlimited number of token types.
      */
-    public function skip(mixed ...$types): StatefulLexer
+    public function skip(mixed ...$types): static
     {
         if ($this->stateBeingBuilt === null) {
             throw new LogicException("Define a lexer state first.");
         }
 
-        $this->states[$this->stateBeingBuilt]['skip_tokens'] = $types;
+        $this->stateSkipTokens[$this->stateBeingBuilt] = array_values($types);
 
         return $this;
     }
 
     /**
      * Registers a new lexer state.
-     *
-     * @param string $state The new state name.
      */
-    public function state(string $state): StatefulLexer
+    public function state(string $state): static
     {
         $this->stateBeingBuilt = $state;
 
-        $this->states[$state] = [
-            'recognizers' => [],
-            'actions' => [],
-            'skip_tokens' => [],
-        ];
+        $this->stateRecognizers[$state] = [];
+        $this->stateActions[$state] = [];
+        $this->stateSkipTokens[$state] = [];
 
         return $this;
     }
 
     /**
      * Sets the starting state for the lexer.
-     *
-     * @param string $state The name of the starting state.
      */
-    public function start(string $state): StatefulLexer
+    public function start(string $state): static
     {
         $this->stateStack[] = $state;
 
@@ -135,13 +139,13 @@ class StatefulLexer extends AbstractLexer
      *
      * @param mixed $action The action to take.
      */
-    public function action(mixed $action): StatefulLexer
+    public function action(mixed $action): static
     {
         if ($this->stateBeingBuilt === null || $this->typeBeingBuilt === null) {
             throw new LogicException("Define a lexer state and type first.");
         }
 
-        $this->states[$this->stateBeingBuilt]['actions'][$this->typeBeingBuilt] = $action;
+        $this->stateActions[$this->stateBeingBuilt][$this->typeBeingBuilt] = $action;
 
         return $this;
     }
@@ -151,9 +155,9 @@ class StatefulLexer extends AbstractLexer
      */
     protected function shouldSkipToken(Token $token): bool
     {
-        $state = $this->states[$this->stateStack[count($this->stateStack) - 1]];
+        $currentState = $this->stateStack[count($this->stateStack) - 1];
 
-        return in_array($token->getType(), $state['skip_tokens']);
+        return in_array($token->getType(), $this->stateSkipTokens[$currentState]);
     }
 
     /**
@@ -165,22 +169,26 @@ class StatefulLexer extends AbstractLexer
             throw new LogicException("You must set a starting state before lexing.");
         }
 
-        $value = $type = $action = null;
-        $state = $this->states[$this->stateStack[count($this->stateStack) - 1]];
+        $currentState = $this->stateStack[count($this->stateStack) - 1];
+        $recognizers = $this->stateRecognizers[$currentState];
+        $actions = $this->stateActions[$currentState];
 
-        foreach ($state['recognizers'] as $t => $recognizer) {
-            /** @var string $t */
-            /** @var SimpleRecognizer|RegexRecognizer $recognizer */
-            if ($recognizer->match($string, $v)) {
+        $value = null;
+        $type = null;
+        $action = null;
+
+        foreach ($recognizers as $t => $recognizer) {
+            $v = $recognizer->match($string);
+            if ($v !== null) {
                 if ($value === null || Util::stringLength($v) > Util::stringLength($value)) {
                     $value = $v;
                     $type = $t;
-                    $action = $state['actions'][$type];
+                    $action = $actions[$type];
                 }
             }
         }
 
-        if ($type !== null) {
+        if ($type !== null && $value !== null) {
             if (is_string($action)) { // enter new state
                 $this->stateStack[] = $action;
             } elseif ($action === self::POP_STATE) {

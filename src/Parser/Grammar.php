@@ -26,10 +26,13 @@ class Grammar
     public const EPSILON = '$epsilon';
 
     /**
-     * @var Rule[]
+     * @var array<int, Rule>
      */
     protected array $rules = [];
 
+    /**
+     * @var array<string, list<Rule>>
+     */
     protected array $groupedRules = [];
 
     protected int $nextRuleNumber = 1;
@@ -38,15 +41,16 @@ class Grammar
 
     protected ?string $currentNonterminal = null;
 
-    /**
-     * @var string[]
-     */
-    private array $nonterminals = [];
-
     protected ?Rule $currentRule = null;
 
+    /**
+     * @var array<string, array{prec: int, assoc: int}>
+     */
     protected array $operators = [];
 
+    /**
+     * @var list<string>|null
+     */
     protected ?array $currentOperators = null;
 
     /**
@@ -78,7 +82,7 @@ class Grammar
 
     /**
      * Signifies that the conflicts should be
-     * resolved by taking operator precendence
+     * resolved by taking operator precedence
      * into account.
      */
     public const OPERATORS = 8;
@@ -115,8 +119,6 @@ class Grammar
      * Defines an alternative for a grammar rule.
      *
      * @param string ...$components The components of the rule.
-     *
-     * @return Grammar This instance.
      */
     public function is(string ...$components): static
     {
@@ -132,10 +134,8 @@ class Grammar
 
         $rule = new Rule($num, $this->currentNonterminal, $components);
 
-        $this->rules[$num] =
-            $this->currentRule =
-            $this->groupedRules[$this->currentNonterminal][] =
-            $rule;
+        $this->rules[$num] = $this->currentRule = $rule;
+        $this->groupedRules[$this->currentNonterminal][] = $rule;
 
         return $this;
     }
@@ -144,8 +144,6 @@ class Grammar
      * Sets the callback for the current rule.
      *
      * @param callable $callback The callback.
-     *
-     * @return Grammar This instance.
      */
     public function call(callable $callback): static
     {
@@ -163,32 +161,22 @@ class Grammar
     /**
      * Returns the set of rules of this grammar.
      *
-     * @return Rule[] The rules.
+     * @return array<int, Rule>
      */
     public function getRules(): array
     {
         return $this->rules;
     }
 
-    public function getRule($number): Rule
+    public function getRule(int $number): Rule
     {
         return $this->rules[$number];
     }
 
     /**
-     * Returns the nonterminal symbols of this grammar.
-     *
-     * @return string[] The nonterminals.
-     */
-    public function getNonterminals(): array
-    {
-        return $this->nonterminals;
-    }
-
-    /**
      * Returns rules grouped by nonterminal name.
      *
-     * @return array The rules grouped by nonterminal name.
+     * @return array<string, list<Rule>>
      */
     public function getGroupedRules(): array
     {
@@ -207,8 +195,6 @@ class Grammar
 
     /**
      * Returns the augmented start rule. For internal use only.
-     *
-     * @return Rule The start rule.
      */
     public function getStartRule(): Rule
     {
@@ -241,8 +227,6 @@ class Grammar
 
     /**
      * Does a nonterminal $name exist in the grammar?
-     *
-     * @param string $name The name of the nonterminal.
      */
     public function hasNonterminal(string $name): bool
     {
@@ -253,14 +237,11 @@ class Grammar
      * Defines a group of operators.
      *
      * @param string ...$ops Any number of tokens that serve as the operators.
-     *
-     * @return Grammar This instance for fluent interface.
      */
     public function operators(string ...$ops): static
     {
         $this->currentRule = null;
-
-        $this->currentOperators = $ops;
+        $this->currentOperators = array_values($ops);
 
         foreach ($ops as $op) {
             $this->operators[$op] = [
@@ -274,8 +255,6 @@ class Grammar
 
     /**
      * Marks the current group of operators as left-associative.
-     *
-     * @return Grammar This instance for fluent interface.
      */
     public function left(): static
     {
@@ -284,8 +263,6 @@ class Grammar
 
     /**
      * Marks the current group of operators as right-associative.
-     *
-     * @return Grammar This instance for fluent interface.
      */
     public function right(): static
     {
@@ -294,8 +271,6 @@ class Grammar
 
     /**
      * Marks the current group of operators as nonassociative.
-     *
-     * @return Grammar This instance for fluent interface.
      */
     public function nonassoc(): static
     {
@@ -303,15 +278,13 @@ class Grammar
     }
 
     /**
-     * Explicitly sets the associatity of the current group of operators.
+     * Explicitly sets the associativity of the current group of operators.
      *
      * @param int $a One of Grammar::LEFT, Grammar::RIGHT, Grammar::NONASSOC
-     *
-     * @return Grammar This instance for fluent interface.
      */
     public function assoc(int $a): static
     {
-        if (!$this->currentOperators) {
+        if ($this->currentOperators === null) {
             throw new LogicException('Define a group of operators first.');
         }
 
@@ -328,13 +301,11 @@ class Grammar
      * of the currently described rule.
      *
      * @param int $i The precedence as an integer.
-     *
-     * @return Grammar This instance for fluent interface.
      */
     public function prec(int $i): static
     {
-        if (!$this->currentOperators) {
-            if (!$this->currentRule) {
+        if ($this->currentOperators === null) {
+            if ($this->currentRule === null) {
                 throw new LogicException('Define a group of operators or a rule first.');
             } else {
                 $this->currentRule->setPrecedence($i);
@@ -350,15 +321,16 @@ class Grammar
 
     /**
      * Is the passed token an operator?
-     *
-     * @param string $token The token type.
      */
     public function hasOperator(string $token): bool
     {
         return array_key_exists($token, $this->operators);
     }
 
-    public function getOperatorInfo($token)
+    /**
+     * @return array{prec: int, assoc: int}
+     */
+    public function getOperatorInfo(string $token): array
     {
         return $this->operators[$token];
     }

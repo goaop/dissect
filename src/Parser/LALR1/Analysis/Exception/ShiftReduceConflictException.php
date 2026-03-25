@@ -26,19 +26,12 @@ The grammar exhibits a shift/reduce conflict on rule:
 (on lookahead "%s" in state %d). Restructure your grammar or choose a conflict resolution mode.
 EOT;
 
-    protected Rule $rule;
-
-    protected string $lookahead;
-
-    /**
-     * Constructor.
-     *
-     * @param Rule $rule The conflicting grammar rule.
-     * @param string $lookahead The conflicting lookahead to shift.
-     * @param Automaton $automaton The faulty automaton.
-     */
-    public function __construct($state, Rule $rule, $lookahead, Automaton $automaton)
-    {
+    public function __construct(
+        int $state,
+        protected readonly Rule $rule,
+        protected readonly string $lookahead,
+        Automaton $automaton
+    ) {
         $components = $rule->getComponents();
 
         parent::__construct(
@@ -53,15 +46,10 @@ EOT;
             $state,
             $automaton
         );
-
-        $this->rule = $rule;
-        $this->lookahead = $lookahead;
     }
 
     /**
      * Returns the conflicting rule.
-     *
-     * @return Rule The conflicting rule.
      */
     public function getRule(): Rule
     {
@@ -70,8 +58,6 @@ EOT;
 
     /**
      * Returns the conflicting lookahead.
-     *
-     * @return string The conflicting lookahead.
      */
     public function getLookahead(): string
     {

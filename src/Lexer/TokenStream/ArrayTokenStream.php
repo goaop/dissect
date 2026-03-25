@@ -62,7 +62,7 @@ class ArrayTokenStream implements TokenStream
     /**
      * {@inheritDoc}
      */
-    public function get($n): Token
+    public function get(int $n): Token
     {
         if (isset($this->tokens[$n])) {
             return $this->tokens[$n];
@@ -74,7 +74,7 @@ class ArrayTokenStream implements TokenStream
     /**
      * {@inheritDoc}
      */
-    public function move($n): void
+    public function move(int $n): void
     {
         if (!isset($this->tokens[$n])) {
             throw new OutOfBoundsException('Invalid index to move to.');
@@ -86,7 +86,7 @@ class ArrayTokenStream implements TokenStream
     /**
      * {@inheritDoc}
      */
-    public function seek($n): void
+    public function seek(int $n): void
     {
         if (!isset($this->tokens[$this->position + $n])) {
             throw new OutOfBoundsException('Invalid seek.');
@@ -112,6 +112,9 @@ class ArrayTokenStream implements TokenStream
         return count($this->tokens);
     }
 
+    /**
+     * @return ArrayIterator<int, Token>
+     */
     public function getIterator(): ArrayIterator
     {
         return new ArrayIterator($this->tokens);

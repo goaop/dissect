@@ -20,19 +20,22 @@ class Parser implements P\Parser
 {
     protected Grammar $grammar;
 
+    /**
+     * @var array{action: array<int, array<string, int>>, goto: array<int, array<string, int>>}
+     */
     protected array $parseTable;
 
     /**
      * Constructor.
      *
      * @param Grammar $grammar The grammar.
-     * @param array|null $parseTable If given, the parser doesn't have to analyze the grammar.
+     * @param array{action: array<int, array<string, int>>, goto: array<int, array<string, int>>}|null $parseTable If given, the parser doesn't have to analyze the grammar.
      */
     public function __construct(Grammar $grammar, ?array $parseTable = null)
     {
         $this->grammar = $grammar;
 
-        if ($parseTable) {
+        if ($parseTable !== null) {
             $this->parseTable = $parseTable;
         } else {
             $analyzer = new Analyzer();
@@ -54,7 +57,6 @@ class Parser implements P\Parser
 
                 if (!isset($this->parseTable['action'][$currentState][$type])) {
                     // unexpected token
-
                     throw new UnexpectedTokenException(
                         $token,
                         array_keys($this->parseTable['action'][$currentState])
@@ -65,7 +67,6 @@ class Parser implements P\Parser
 
                 if ($action > 0) {
                     // shift
-
                     $args[] = $token;
                     $stateStack[] = $currentState = $action;
 
@@ -79,7 +80,7 @@ class Parser implements P\Parser
                     $newArgs = array_splice($args, -$popCount);
 
                     if ($callback = $rule->getCallback()) {
-                        $args[] = call_user_func_array($callback, $newArgs);
+                        $args[] = $callback(...$newArgs);
                     } else {
                         $args[] = $newArgs[0];
                     }
@@ -89,7 +90,6 @@ class Parser implements P\Parser
                         [$state][$rule->getName()];
                 } else {
                     // accept
-
                     return $args[0];
                 }
             }

@@ -13,24 +13,13 @@ use RuntimeException;
  */
 class RecognitionException extends RuntimeException
 {
-    protected int $sourceLine;
-
-    /**
-     * Constructor.
-     *
-     * @param int $line The line in the source.
-     */
-    public function __construct(int $line)
+    public function __construct(protected readonly int $sourceLine)
     {
-        $this->sourceLine = $line;
-
-        parent::__construct(sprintf("Cannot extract another token at line %d.", $line));
+        parent::__construct(sprintf("Cannot extract another token at line %d.", $sourceLine));
     }
 
     /**
-     * Returns the source line number where the exception occured.
-     *
-     * @return int The source line number.
+     * Returns the source line number where the exception occurred.
      */
     public function getSourceLine(): int
     {

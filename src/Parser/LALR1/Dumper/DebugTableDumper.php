@@ -16,25 +16,19 @@ use Dissect\Parser\Grammar;
  */
 class DebugTableDumper implements TableDumper
 {
-    protected Grammar $grammar;
-
     protected StringWriter $writer;
 
     protected bool $written = false;
 
-    /**
-     * Constructor.
-     *
-     * @param Grammar $grammar The grammar of this parse table.
-     */
-    public function __construct(Grammar $grammar)
+    public function __construct(protected readonly Grammar $grammar)
     {
-        $this->grammar = $grammar;
         $this->writer = new StringWriter();
     }
 
     /**
      * {@inheritDoc}
+     *
+     * @param array{action: array<int, array<string, int>>, goto: array<int, array<string, int>>} $table
      */
     public function dump(array $table): string
     {
@@ -71,7 +65,7 @@ class DebugTableDumper implements TableDumper
         return $this->writer->get();
     }
 
-    protected function writeHeader()
+    protected function writeHeader(): void
     {
         $this->writer->writeLine('<?php');
         $this->writer->writeLine();
@@ -80,7 +74,10 @@ class DebugTableDumper implements TableDumper
         $this->writer->writeLine("'action' => [");
     }
 
-    protected function writeState($n, array $state)
+    /**
+     * @param array<string, int> $state
+     */
+    protected function writeState(int $n, array $state): void
     {
         $this->writer->writeLine($n . ' => [');
         $this->writer->indent();
@@ -94,7 +91,7 @@ class DebugTableDumper implements TableDumper
         $this->writer->writeLine('],');
     }
 
-    protected function writeAction($trigger, $action)
+    protected function writeAction(string $trigger, int $action): void
     {
         if ($action > 0) {
             $this->writer->writeLine(sprintf(
@@ -132,14 +129,17 @@ class DebugTableDumper implements TableDumper
         ));
     }
 
-    protected function writeMiddle()
+    protected function writeMiddle(): void
     {
         $this->writer->writeLine('],');
         $this->writer->writeLine();
         $this->writer->writeLine("'goto' => [");
     }
 
-    protected function writeGoto($n, array $map)
+    /**
+     * @param array<string, int> $map
+     */
+    protected function writeGoto(int $n, array $map): void
     {
         $this->writer->writeLine($n . ' => [');
         $this->writer->indent();
@@ -164,7 +164,7 @@ class DebugTableDumper implements TableDumper
         $this->writer->writeLine('],');
     }
 
-    protected function writeFooter()
+    protected function writeFooter(): void
     {
         $this->writer->writeLine('],');
         $this->writer->outdent();

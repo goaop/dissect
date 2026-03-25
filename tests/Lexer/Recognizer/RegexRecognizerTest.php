@@ -9,23 +9,21 @@ use PHPUnit\Framework\TestCase;
 class RegexRecognizerTest extends TestCase
 {
     #[\PHPUnit\Framework\Attributes\Test]
-    public function recognizerShouldMatchAndPassTheValueByReference(): void
+    public function recognizerShouldMatchAndReturnTheMatchedValue(): void
     {
         $recognizer = new RegexRecognizer('/[a-z]+/');
-        $result = $recognizer->match('lorem ipsum', $value);
+        $value = $recognizer->match('lorem ipsum');
 
-        $this->assertTrue($result);
         $this->assertNotNull($value);
         $this->assertSame('lorem', $value);
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
-    public function recognizerShouldFailAndTheValueShouldStayNull(): void
+    public function recognizerShouldFailAndReturnNull(): void
     {
         $recognizer = new RegexRecognizer('/[a-z]+/');
-        $result = $recognizer->match('123 456', $value);
+        $value = $recognizer->match('123 456');
 
-        $this->assertFalse($result);
         $this->assertNull($value);
     }
 
@@ -33,9 +31,8 @@ class RegexRecognizerTest extends TestCase
     public function recognizerShouldFailIfTheMatchIsNotAtTheBeginningOfTheString(): void
     {
         $recognizer = new RegexRecognizer('/[a-z]+/');
-        $result = $recognizer->match('234 class', $value);
+        $value = $recognizer->match('234 class');
 
-        $this->assertFalse($result);
         $this->assertNull($value);
     }
 }

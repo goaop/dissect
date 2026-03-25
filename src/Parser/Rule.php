@@ -12,40 +12,24 @@ namespace Dissect\Parser;
  */
 class Rule
 {
-    protected int $number;
-
-    protected string $name;
-
     /**
-     * @var string[]
-     */
-    protected array $components;
-
-    /**
-     * @var callable
+     * @var callable|null
      */
     protected $callback = null;
 
     protected ?int $precedence = null;
 
     /**
-     * Constructor.
-     *
-     * @param int $number The number of the rule in the grammar.
-     * @param string $name The name (lhs) of the rule ("A" in "A -> a b c")
      * @param string[] $components The components of this rule.
      */
-    public function __construct(int $number, string $name, array $components)
-    {
-        $this->number = $number;
-        $this->name = $name;
-        $this->components = $components;
-    }
+    public function __construct(
+        protected readonly int $number,
+        protected readonly string $name,
+        protected readonly array $components
+    ) {}
 
     /**
      * Returns the number of this rule.
-     *
-     * @return int The number of this rule.
      */
     public function getNumber(): int
     {
@@ -54,8 +38,6 @@ class Rule
 
     /**
      * Returns the name of this rule.
-     *
-     * @return string The name of this rule.
      */
     public function getName(): string
     {
@@ -65,7 +47,7 @@ class Rule
     /**
      * Returns the components of this rule.
      *
-     * @return string[] The components of this rule.
+     * @return string[]
      */
     public function getComponents(): array
     {
@@ -73,20 +55,11 @@ class Rule
     }
 
     /**
-     * Returns a component at index $index or null
-     * if index is out of range.
-     *
-     * @param int $index The index.
-     *
-     * @return ?string The component at index $index.
+     * Returns a component at index $index or null if index is out of range.
      */
     public function getComponent(int $index): ?string
     {
-        if (!isset($this->components[$index])) {
-            return null;
-        }
-
-        return $this->components[$index];
+        return $this->components[$index] ?? null;
     }
 
     /**
@@ -109,7 +82,7 @@ class Rule
         return $this->precedence;
     }
 
-    public function setPrecedence($i): void
+    public function setPrecedence(int $i): void
     {
         $this->precedence = $i;
     }

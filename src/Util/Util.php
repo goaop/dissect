@@ -16,20 +16,23 @@ abstract class Util
      *
      * {a, b} union {b, c} = {a, b, c}
      *
-     * @return array The union of given sets.
+     * @template T of string
+     * @param array<T> ...$arrays
+     * @return array<T> The union of given sets.
      */
     public static function union(array ...$arrays): array
     {
-        return array_unique(call_user_func_array('array_merge', $arrays));
+        return array_unique(array_merge(...$arrays));
     }
 
     /**
      * Determines whether two sets have a difference.
      *
-     * @param array $first The first set.
-     * @param array $second The second set.
+     * @template T of string
+     * @param array<T> $first The first set.
+     * @param array<T> $second The second set.
      *
-     * @return boolean Whether there is a difference.
+     * @return bool Whether there is a difference.
      */
     public static function different(array $first, array $second): bool
     {
@@ -37,15 +40,13 @@ abstract class Util
     }
 
     /**
-     * Determines length of a UTF-8 string.
+     * Determines the byte length of a string value (for position tracking).
      *
-     * @param string $str The string in UTF-8 encoding.
-     *
-     * @return int The length.
+     * @param int|string $str The value.
      */
-    public static function stringLength(string $str): int
+    public static function stringLength(int|string $str): int
     {
-        return mb_strlen(mb_convert_encoding($str, 'ISO-8859-1'));
+        return strlen((string) $str);
     }
 
     /**
@@ -59,16 +60,10 @@ abstract class Util
      */
     public static function substring(string $str, int $position, ?int $length = null): string
     {
-        static $lengthFunc = null;
-
-        if ($lengthFunc === null) {
-            $lengthFunc = function_exists('mb_substr') ? 'mb_substr' : 'iconv_substr';
-        }
-
         if ($length === null) {
             $length = self::stringLength($str);
         }
 
-        return $lengthFunc($str, $position, $length, 'UTF-8');
+        return mb_substr($str, $position, $length, 'UTF-8');
     }
 }

@@ -14,15 +14,24 @@ use RuntimeException;
  */
 class CommonNode implements Node
 {
+    /**
+     * @var array<int|string, Node>
+     */
     protected array $nodes;
+
+    /**
+     * @var array<string, mixed>
+     */
     protected array $attributes;
+
+    /**
+     * @var array<string, Node>
+     */
     protected array $children = [];
 
     /**
-     * Constructor.
-     *
-     * @param array $attributes The attributes of this node.
-     * @param array $nodes The children of this node.
+     * @param array<string, mixed> $attributes The attributes of this node.
+     * @param array<int|string, Node> $nodes The children of this node.
      */
     public function __construct(array $attributes = [], array $nodes = [])
     {
@@ -55,7 +64,7 @@ class CommonNode implements Node
             throw new RuntimeException(sprintf('No child node "%s" exists.', $name));
         }
 
-        return $this->nodes[$name];
+        return $this->children[$name];
     }
 
     /**
@@ -123,6 +132,9 @@ class CommonNode implements Node
         return count($this->children);
     }
 
+    /**
+     * @return ArrayIterator<string, Node>
+     */
     public function getIterator(): ArrayIterator
     {
         return new ArrayIterator($this->children);

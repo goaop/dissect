@@ -17,15 +17,7 @@ use Dissect\Parser\LALR1\Analysis\State;
  */
 class AutomatonDumper
 {
-    protected Automaton $automaton;
-
-    /**
-     * Constructor.
-     */
-    public function __construct(Automaton $automaton)
-    {
-        $this->automaton = $automaton;
-    }
+    public function __construct(protected readonly Automaton $automaton) {}
 
     /**
      * Dumps the entire automaton.
@@ -63,8 +55,7 @@ class AutomatonDumper
     }
 
     /**
-     * Dumps only the specified state + any relevant
-     * transitions.
+     * Dumps only the specified state + any relevant transitions.
      *
      * @param int $n The number of the state.
      *
@@ -105,18 +96,18 @@ class AutomatonDumper
         return $writer->get();
     }
 
-    protected function writeHeader(StringWriter $writer, $stateNumber = null): void
+    protected function writeHeader(StringWriter $writer, ?int $stateNumber = null): void
     {
         $writer->writeLine(sprintf(
             'digraph %s {',
-            $stateNumber ? 'State' . $stateNumber : 'Automaton'
+            $stateNumber !== null ? 'State' . $stateNumber : 'Automaton'
         ));
 
         $writer->indent();
         $writer->writeLine('rankdir="LR";');
     }
 
-    protected function writeState(StringWriter $writer, State $state, $full = true): void
+    protected function writeState(StringWriter $writer, State $state, bool $full = true): void
     {
         $n = $state->getNumber();
 

@@ -6,36 +6,24 @@ namespace Dissect\Lexer\Recognizer;
 
 /**
  * SimpleRecognizer matches a string by a simple
- * strpos match.
+ * strncmp match.
  *
  * @author Jakub Lédl <jakubledl@gmail.com>
  * @see \Dissect\Lexer\Recognizer\SimpleRecognizerTest
  */
 class SimpleRecognizer implements Recognizer
 {
-    protected string $string;
-
-    /**
-     * Constructor.
-     *
-     * @param string $string The string to match by.
-     */
-    public function __construct(string $string)
-    {
-        $this->string = $string;
-    }
+    public function __construct(protected readonly string $string) {}
 
     /**
      * {@inheritDoc}
      */
-    public function match(string $string, ?string &$result = null): bool
+    public function match(string $string): ?string
     {
         if (strncmp($string, $this->string, strlen($this->string)) === 0) {
-            $result = $this->string;
-
-            return true;
+            return $this->string;
         }
 
-        return false;
+        return null;
     }
 }

@@ -13,14 +13,18 @@ namespace Dissect\Parser\LALR1\Analysis;
  */
 class Automaton
 {
+    /**
+     * @var array<int, State>
+     */
     protected array $states = [];
 
+    /**
+     * @var array<int, array<string, int>>
+     */
     protected array $transitionTable = [];
 
     /**
      * Adds a new automaton state.
-     *
-     * @param State $state The new state.
      */
     public function addState(State $state): void
     {
@@ -41,10 +45,6 @@ class Automaton
 
     /**
      * Returns a state by its number.
-     *
-     * @param int $number The state number.
-     *
-     * @return State The requested state.
      */
     public function getState(int $number): State
     {
@@ -53,10 +53,8 @@ class Automaton
 
     /**
      * Does this automaton have a state identified by $number?
-     *
-     * @param $number
      */
-    public function hasState($number): bool
+    public function hasState(int $number): bool
     {
         return isset($this->states[$number]);
     }
@@ -64,7 +62,7 @@ class Automaton
     /**
      * Returns all states in this FSA.
      *
-     * @return array The states of this FSA.
+     * @return array<int, State>
      */
     public function getStates(): array
     {
@@ -74,7 +72,7 @@ class Automaton
     /**
      * Returns the transition table for this automaton.
      *
-     * @return array The transition table.
+     * @return array<int, array<string, int>>
      */
     public function getTransitionTable(): array
     {
