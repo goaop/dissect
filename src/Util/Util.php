@@ -57,7 +57,7 @@ abstract class Util
      *
      * @return string The substring.
      */
-    public static function substring(string $str, int $position, int $length = null): string
+    public static function substring(string $str, int $position, ?int $length = null): string
     {
         static $lengthFunc = null;
 

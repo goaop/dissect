@@ -61,7 +61,7 @@ class StringWriter
      *
      * @param string|null $string The string to write.
      */
-    public function writeLine(string $string = null): void
+    public function writeLine(?string $string = null): void
     {
         if ($string) {
             $this->write(sprintf(
