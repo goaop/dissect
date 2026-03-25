@@ -8,6 +8,7 @@ use RuntimeException;
 
 class StubRegexLexer extends RegexLexer
 {
+    /** @var string[] */
     protected array $operators = ['+', '-'];
 
     protected function getCatchablePatterns(): array
@@ -23,8 +24,6 @@ class StubRegexLexer extends RegexLexer
     protected function getType(string &$value): string
     {
         if (is_numeric($value)) {
-            $value = (int)$value;
-
             return 'INT';
         } elseif (in_array($value, $this->operators)) {
             return $value;

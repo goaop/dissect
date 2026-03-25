@@ -13,14 +13,12 @@ namespace Dissect\Lexer\Recognizer;
 interface Recognizer
 {
     /**
-     * Returns a boolean value specifying whether
-     * the string matches or not and if it does,
-     * returns the match in the second variable.
+     * Attempts to match the beginning of the string.
+     * Returns the matched value on success, or null on failure.
      *
      * @param string $string The string to match.
-     * @param ?string $result The variable that gets set to the value of the match.
      *
-     * @return boolean Whether the match was successful or not.
+     * @return string|null The matched value, or null if no match.
      */
-    public function match(string $string, ?string &$result = null): bool;
+    public function match(string $string): ?string;
 }

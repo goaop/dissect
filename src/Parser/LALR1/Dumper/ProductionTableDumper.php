@@ -17,6 +17,8 @@ class ProductionTableDumper implements TableDumper
 {
     /**
      * {@inheritDoc}
+     *
+     * @param array{action: array<int, array<string, int>>, goto: array<int, array<string, int>>} $table
      */
     public function dump(array $table): string
     {
@@ -31,7 +33,7 @@ class ProductionTableDumper implements TableDumper
 
         $this->writeMiddle($writer);
 
-        foreach($table['goto'] as $num => $map) {
+        foreach ($table['goto'] as $num => $map) {
             $this->writeGoto($writer, $num, $map);
             $writer->write(',');
         }
@@ -43,12 +45,15 @@ class ProductionTableDumper implements TableDumper
         return $writer->get();
     }
 
-    protected function writeIntro(StringWriter $writer)
+    protected function writeIntro(StringWriter $writer): void
     {
         $writer->write("<?php return ['action'=>[");
     }
 
-    protected function writeState(StringWriter $writer, $num, $state)
+    /**
+     * @param array<string, int> $state
+     */
+    protected function writeState(StringWriter $writer, int $num, array $state): void
     {
         $writer->write($num . '=>[');
 
@@ -60,7 +65,7 @@ class ProductionTableDumper implements TableDumper
         $writer->write(']');
     }
 
-    protected function writeAction(StringWriter $writer, $trigger, $action)
+    protected function writeAction(StringWriter $writer, string $trigger, int $action): void
     {
         $writer->write(sprintf(
             "'%s'=>%d",
@@ -69,12 +74,15 @@ class ProductionTableDumper implements TableDumper
         ));
     }
 
-    protected function writeMiddle(StringWriter $writer)
+    protected function writeMiddle(StringWriter $writer): void
     {
         $writer->write("],'goto'=>[");
     }
 
-    protected function writeGoto(StringWriter $writer, $num, $map)
+    /**
+     * @param array<string, int> $map
+     */
+    protected function writeGoto(StringWriter $writer, int $num, array $map): void
     {
         $writer->write($num . '=>[');
 
@@ -91,7 +99,7 @@ class ProductionTableDumper implements TableDumper
         $writer->write(']');
     }
 
-    protected function writeOutro(StringWriter $writer)
+    protected function writeOutro(StringWriter $writer): void
     {
         $writer->write(']];');
     }

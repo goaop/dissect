@@ -177,6 +177,7 @@ class AnalyzerTest extends TestCase
 
         $this->assertSame(3, $conflict['state']);
         $this->assertSame('b', $conflict['lookahead']);
+        $this->assertArrayHasKey('rule', $conflict);
         $this->assertSame(2, $conflict['rule']->getNumber());
         $this->assertSame(Grammar::SHIFT, $conflict['resolution']);
 
@@ -184,6 +185,7 @@ class AnalyzerTest extends TestCase
 
         $this->assertSame(4, $conflict['state']);
         $this->assertSame('b', $conflict['lookahead']);
+        $this->assertArrayHasKey('rule', $conflict);
         $this->assertSame(1, $conflict['rule']->getNumber());
         $this->assertSame(Grammar::SHIFT, $conflict['resolution']);
 
@@ -191,6 +193,7 @@ class AnalyzerTest extends TestCase
 
         $this->assertSame(4, $conflict['state']);
         $this->assertSame(Parser::EOF_TOKEN_TYPE, $conflict['lookahead']);
+        $this->assertArrayHasKey('rules', $conflict);
         $this->assertSame(1, $conflict['rules'][0]->getNumber());
         $this->assertSame(2, $conflict['rules'][1]->getNumber());
         $this->assertSame(Grammar::LONGER_REDUCE, $conflict['resolution']);
@@ -199,6 +202,7 @@ class AnalyzerTest extends TestCase
 
         $this->assertSame(4, $conflict['state']);
         $this->assertSame('b', $conflict['lookahead']);
+        $this->assertArrayHasKey('rule', $conflict);
         $this->assertSame(2, $conflict['rule']->getNumber());
         $this->assertSame(Grammar::SHIFT, $conflict['resolution']);
     }

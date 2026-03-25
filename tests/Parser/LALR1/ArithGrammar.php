@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Dissect\Parser\LALR1;
 
+use Dissect\Lexer\Token;
 use Dissect\Parser\Grammar;
 
 class ArithGrammar extends Grammar
@@ -13,28 +14,28 @@ class ArithGrammar extends Grammar
     {
         $this('Expr')
             ->is('Expr', '+', 'Expr')
-            ->call(fn($l, $_, $r) => $l + $r)
+            ->call(function(int|float $l, mixed $_, int|float $r): int|float { return $l + $r; })
 
             ->is('Expr', '-', 'Expr')
-            ->call(fn($l, $_, $r) => $l - $r)
+            ->call(function(int|float $l, mixed $_, int|float $r): int|float { return $l - $r; })
 
             ->is('Expr', '*', 'Expr')
-            ->call(fn($l, $_, $r) => $l * $r)
+            ->call(function(int|float $l, mixed $_, int|float $r): int|float { return $l * $r; })
 
             ->is('Expr', '/', 'Expr')
-            ->call(fn($l, $_, $r) => $l / $r)
+            ->call(function(int|float $l, mixed $_, int|float $r): int|float { return $l / $r; })
 
             ->is('Expr', '**', 'Expr')
-            ->call(fn($l, $_, $r) => pow($l, $r))
+            ->call(function(int|float $l, mixed $_, int|float $r): int|float { return pow($l, $r); })
 
             ->is('(', 'Expr', ')')
-            ->call(fn($r, $e, $_) => $e)
+            ->call(function(mixed $r, int|float $e, mixed $_): int|float { return $e; })
 
             ->is('-', 'Expr')->prec(4)
-            ->call(fn($_, $e) => -$e)
+            ->call(function(mixed $_, int|float $e): int|float { return -$e; })
 
             ->is('INT')
-            ->call(fn($i) => (int)$i->getValue());
+            ->call(function(Token $i): int { return (int) $i->getValue(); });
 
         $this->operators('+', '-')->left()->prec(1);
         $this->operators('*', '/')->left()->prec(2);

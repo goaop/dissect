@@ -19,7 +19,7 @@ class Application extends BaseApplication
     // credit goes to everzet & kostiklv, since
     // I copied the BehatApplication class when
     // dealing with some CLI problems.
-    public function __construct($version)
+    public function __construct(string $version)
     {
         parent::__construct('Dissect', $version);
     }

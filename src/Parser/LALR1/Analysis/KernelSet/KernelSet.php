@@ -22,7 +22,7 @@ class KernelSet
      * exists. Otherwise, returns the number of the
      * existing state.
      *
-     * @param array $kernel The state kernel.
+     * @param array<array{int, int}> $kernel The state kernel.
      *
      * @return int The state number.
      */
@@ -64,16 +64,16 @@ class KernelSet
     /**
      * Hashes a state kernel using a pairing function.
      *
-     * @param array $kernel The kernel.
+     * @param array<array{int, int}> $kernel The kernel.
      *
-     * @return array The hashed kernel.
+     * @return int[] The hashed kernel.
      */
     public static function hashKernel(array $kernel): array
     {
-        $kernel = array_map(function ($tuple) {
-            list ($car, $cdr) = $tuple;
+        $kernel = array_map(static function (array $tuple): int {
+            [$car, $cdr] = $tuple;
 
-            return ($car + $cdr) * ($car + $cdr + 1) / 2 + $cdr;
+            return (int) (($car + $cdr) * ($car + $cdr + 1) / 2 + $cdr);
         }, $kernel);
 
         sort($kernel);

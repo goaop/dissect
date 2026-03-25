@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Dissect\Lexer;
 
+use Dissect\Lexer\Recognizer\Recognizer;
 use Dissect\Lexer\Recognizer\RegexRecognizer;
 use Dissect\Lexer\Recognizer\SimpleRecognizer;
 use Dissect\Util\Util;
@@ -17,10 +18,13 @@ use Dissect\Util\Util;
  */
 class SimpleLexer extends AbstractLexer
 {
+    /**
+     * @var list<mixed>
+     */
     protected array $skipTokens = [];
 
     /**
-     * @var SimpleRecognizer[]
+     * @var array<string, Recognizer>
      */
     protected array $recognizers = [];
 
@@ -28,13 +32,10 @@ class SimpleLexer extends AbstractLexer
      * Adds a new token definition. If given only one argument,
      * it assumes that the token type and recognized value are
      * identical.
-     *
-     * @param string $type The token type.
-     * @param string|null $value The value to be recognized.
      */
-    public function token(string $type, ?string $value = null): self
+    public function token(string $type, ?string $value = null): static
     {
-        if ($value) {
+        if ($value !== null) {
             $this->recognizers[$type] = new SimpleRecognizer($value);
         } else {
             $this->recognizers[$type] = new SimpleRecognizer($type);
@@ -45,9 +46,6 @@ class SimpleLexer extends AbstractLexer
 
     /**
      * Adds a new regex token definition.
-     *
-     * @param string $type The token type.
-     * @param string $regex The regular expression used to match the token.
      */
     public function regex(string $type, string $regex): static
     {
@@ -63,7 +61,7 @@ class SimpleLexer extends AbstractLexer
      */
     public function skip(mixed ...$types): static
     {
-        $this->skipTokens = $types;
+        $this->skipTokens = array_values($types);
 
         return $this;
     }
@@ -81,10 +79,12 @@ class SimpleLexer extends AbstractLexer
      */
     protected function extractToken(string $string): ?Token
     {
-        $value = $type = null;
+        $value = null;
+        $type = null;
 
         foreach ($this->recognizers as $t => $recognizer) {
-            if ($recognizer->match($string, $v)) {
+            $v = $recognizer->match($string);
+            if ($v !== null) {
                 if ($value === null || Util::stringLength($v) > Util::stringLength($value)) {
                     $value = $v;
                     $type = $t;
@@ -92,7 +92,7 @@ class SimpleLexer extends AbstractLexer
             }
         }
 
-        if ($type !== null) {
+        if ($type !== null && $value !== null) {
             return new CommonToken($type, $value, $this->getCurrentLine());
         }
 

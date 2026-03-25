@@ -9,23 +9,21 @@ use PHPUnit\Framework\TestCase;
 class SimpleRecognizerTest extends TestCase
 {
     #[\PHPUnit\Framework\Attributes\Test]
-    public function recognizerShouldMatchAndPassTheValueByReference(): void
+    public function recognizerShouldMatchAndReturnTheMatchedValue(): void
     {
         $recognizer = new SimpleRecognizer('class');
-        $result = $recognizer->match('class lorem ipsum', $value);
+        $value = $recognizer->match('class lorem ipsum');
 
-        $this->assertTrue($result);
         $this->assertNotNull($value);
         $this->assertSame('class', $value);
     }
 
     #[\PHPUnit\Framework\Attributes\Test]
-    public function recognizerShouldFailAndTheValueShouldStayNull(): void
+    public function recognizerShouldFailAndReturnNull(): void
     {
         $recognizer = new SimpleRecognizer('class');
-        $result = $recognizer->match('lorem ipsum', $value);
+        $value = $recognizer->match('lorem ipsum');
 
-        $this->assertFalse($result);
         $this->assertNull($value);
     }
 }

@@ -30,23 +30,13 @@ vs:
 (on lookahead "%s" in state %d). Restructure your grammar or choose a conflict resolution mode.
 EOT;
 
-    protected Rule $firstRule;
-
-    protected Rule $secondRule;
-
-    protected string $lookahead;
-
-    /**
-     * Constructor.
-     *
-     * @param int $state The number of the inadequate state.
-     * @param Rule $firstRule The first conflicting grammar rule.
-     * @param Rule $secondRule The second conflicting grammar rule.
-     * @param string $lookahead The conflicting lookahead.
-     * @param Automaton $automaton The faulty automaton.
-     */
-    public function __construct(int $state, Rule $firstRule, Rule $secondRule, string $lookahead, Automaton $automaton)
-    {
+    public function __construct(
+        int $state,
+        protected readonly Rule $firstRule,
+        protected readonly Rule $secondRule,
+        protected readonly string $lookahead,
+        Automaton $automaton
+    ) {
         $components1 = $firstRule->getComponents();
         $components2 = $secondRule->getComponents();
 
@@ -65,16 +55,10 @@ EOT;
             $state,
             $automaton
         );
-
-        $this->firstRule = $firstRule;
-        $this->secondRule = $secondRule;
-        $this->lookahead = $lookahead;
     }
 
     /**
      * Returns the first conflicting rule.
-     *
-     * @return Rule The first conflicting rule.
      */
     public function getFirstRule(): Rule
     {
@@ -83,8 +67,6 @@ EOT;
 
     /**
      * Returns the second conflicting rule.
-     *
-     * @return Rule The second conflicting rule.
      */
     public function getSecondRule(): Rule
     {
@@ -93,8 +75,6 @@ EOT;
 
     /**
      * Returns the conflicting lookahead.
-     *
-     * @return string The conflicting lookahead.
      */
     public function getLookahead(): string
     {

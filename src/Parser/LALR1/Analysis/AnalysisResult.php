@@ -4,32 +4,26 @@ declare(strict_types=1);
 
 namespace Dissect\Parser\LALR1\Analysis;
 
+use Dissect\Parser\Rule;
+
 /**
  * The result of a grammar analysis.
  *
  * @author Jakub Lédl <jakubledl@gmail.com>
+ *
+ * @phpstan-type ResolvedConflict array{state: int, lookahead: string, rule?: Rule, rules?: array<Rule>, resolution: int}
  */
 class AnalysisResult
 {
-    protected Automaton $automaton;
-
-    protected array $parseTable;
-
-    protected array $resolvedConflicts;
-
     /**
-     * Constructor.
-     *
-     * @param array $parseTable The parse table.
-     * @param array $conflicts An array of conflicts resolved during parse table
-     * construction.
+     * @param array{action: array<int, array<string, int>>, goto: array<int, array<string, int>>} $parseTable The parse table.
+     * @param list<ResolvedConflict> $resolvedConflicts An array of conflicts resolved during parse table construction.
      */
-    public function __construct(array $parseTable, Automaton $automaton, array $conflicts)
-    {
-        $this->parseTable = $parseTable;
-        $this->automaton = $automaton;
-        $this->resolvedConflicts = $conflicts;
-    }
+    public function __construct(
+        protected readonly array $parseTable,
+        protected readonly Automaton $automaton,
+        protected readonly array $resolvedConflicts
+    ) {}
 
     /**
      * Returns the handle-finding FSA.
@@ -42,7 +36,7 @@ class AnalysisResult
     /**
      * Returns the resulting parse table.
      *
-     * @return array The parse table.
+     * @return array{action: array<int, array<string, int>>, goto: array<int, array<string, int>>}
      */
     public function getParseTable(): array
     {
@@ -52,7 +46,7 @@ class AnalysisResult
     /**
      * Returns an array of resolved parse table conflicts.
      *
-     * @return array The conflicts.
+     * @return list<array{state: int, lookahead: string, rule?: Rule, rules?: array<Rule>, resolution: int}>
      */
     public function getResolvedConflicts(): array
     {

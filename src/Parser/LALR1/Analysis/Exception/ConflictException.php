@@ -17,8 +17,8 @@ class ConflictException extends LogicException
 {
     public function __construct(
         string $message,
-        protected int $state,
-        protected Automaton $automaton
+        protected readonly int $state,
+        protected readonly Automaton $automaton
     ) {
         parent::__construct($message);
     }

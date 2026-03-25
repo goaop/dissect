@@ -33,30 +33,19 @@ use Dissect\Parser\Rule;
  */
 class Item
 {
-    protected Rule $rule;
-
-    protected int $dotIndex;
-
+    /** @var string[] */
     protected array $lookahead = [];
 
+    /** @var Item[] */
     protected array $connected = [];
 
-    /**
-     * Constructor.
-     *
-     * @param Rule $rule The rule of this item.
-     * @param int $dotIndex The index of the dot in this item.
-     */
-    public function __construct(Rule $rule, int $dotIndex)
-    {
-        $this->rule = $rule;
-        $this->dotIndex = $dotIndex;
-    }
+    public function __construct(
+        protected readonly Rule $rule,
+        protected readonly int $dotIndex
+    ) {}
 
     /**
      * Returns the dot index of this item.
-     *
-     * @return int The dot index.
      */
     public function getDotIndex(): int
     {
@@ -73,18 +62,16 @@ class Item
      * </pre>
      *
      * then this method returns the component "b".
-     *
-     * @return string The component.
+     * Only valid when !isReduceItem().
      */
     public function getActiveComponent(): string
     {
-        return $this->rule->getComponent($this->dotIndex);
+        return $this->rule->getComponent($this->dotIndex)
+            ?? throw new \LogicException('No active component: item is a reduce item.');
     }
 
     /**
      * Returns the rule of this item.
-     *
-     * @return Rule The rule.
      */
     public function getRule(): Rule
     {
@@ -99,8 +86,6 @@ class Item
      * <pre>
      * A -> a b c .
      * </pre>
-     *
-     * @return boolean Whether this item is a reduce item.
      */
     public function isReduceItem(): bool
     {
@@ -109,8 +94,6 @@ class Item
 
     /**
      * Connects two items with a lookahead pumping channel.
-     *
-     * @param Item $i The item.
      */
     public function connect(Item $i): void
     {
@@ -118,10 +101,7 @@ class Item
     }
 
     /**
-     * Pumps a lookahead token to this item and all items connected
-     * to it.
-     *
-     * @param string $lookahead The lookahead token name.
+     * Pumps a lookahead token to this item and all items connected to it.
      */
     public function pump(string $lookahead): void
     {
@@ -137,7 +117,7 @@ class Item
     /**
      * Pumps several lookahead tokens.
      *
-     * @param array $lookahead The lookahead tokens.
+     * @param string[] $lookahead The lookahead tokens.
      */
     public function pumpAll(array $lookahead): void
     {
@@ -157,10 +137,9 @@ class Item
     }
 
     /**
-     * Returns all components that haven't been recognized
-     * so far.
+     * Returns all components that haven't been recognized so far.
      *
-     * @return array The unrecognized components.
+     * @return string[] The unrecognized components.
      */
     public function getUnrecognizedComponents(): array
     {

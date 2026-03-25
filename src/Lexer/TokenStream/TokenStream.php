@@ -13,6 +13,8 @@ use OutOfBoundsException;
  * A common contract for all token stream classes.
  *
  * @author Jakub Lédl <jakubledl@gmail.com>
+ *
+ * @extends IteratorAggregate<int, Token>
  */
 interface TokenStream extends Countable, IteratorAggregate
 {

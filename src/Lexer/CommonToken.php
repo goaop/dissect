@@ -11,23 +11,16 @@ namespace Dissect\Lexer;
  */
 class CommonToken implements Token
 {
-    /**
-     * Constructor.
-     *
-     * @param mixed $type The type of the token.
-     * @param int|string $value The token value.
-     * @param int $line The line.
-     */
     public function __construct(
-        protected mixed $type,
-        protected int|string $value,
-        protected int $line
+        protected readonly string $type,
+        protected readonly int|string $value,
+        protected readonly int $line
     ) {}
 
     /**
      * {@inheritDoc}
      */
-    public function getType(): mixed
+    public function getType(): string
     {
         return $this->type;
     }

@@ -10,7 +10,7 @@ use PHPUnit\Framework\TestCase;
 
 class AbstractLexerTest extends TestCase
 {
-    protected ?StubLexer $lexer = null;
+    protected StubLexer $lexer;
 
     public function setUp(): void
     {

@@ -14,7 +14,7 @@ interface TableDumper
     /**
      * Dumps the parse table.
      *
-     * @param array $table The parse table.
+     * @param array{action: array<int, array<string, int>>, goto: array<int, array<string, int>>} $table The parse table.
      *
      * @return string The resulting string representation of the table.
      */

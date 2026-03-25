@@ -8,4 +8,6 @@ if (!file_exists(__DIR__ . '/../vendor/autoload.php')) {
 
 $loader = require __DIR__ . '/../vendor/autoload.php';
 
-$loader->add('Dissect', __DIR__);
+if ($loader instanceof \Composer\Autoload\ClassLoader) {
+    $loader->add('Dissect', __DIR__);
+}

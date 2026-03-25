@@ -9,6 +9,7 @@ use Dissect\Parser\LALR1\Analysis\Exception\ShiftReduceConflictException;
 use Dissect\Parser\LALR1\Analysis\KernelSet\KernelSet;
 use Dissect\Parser\Grammar;
 use Dissect\Parser\Parser;
+use Dissect\Parser\Rule;
 use Dissect\Util\Util;
 use SplQueue;
 
@@ -24,24 +25,18 @@ class Analyzer
     /**
      * Performs a grammar analysis.
      *
-     * @param Grammar $grammar The grammar to analyse.
-     *
      * @return AnalysisResult The result of the analysis.
      */
     public function analyze(Grammar $grammar): AnalysisResult
     {
         $automaton = $this->buildAutomaton($grammar);
-        list($parseTable, $conflicts) = $this->buildParseTable($automaton, $grammar);
+        [$parseTable, $conflicts] = $this->buildParseTable($automaton, $grammar);
 
         return new AnalysisResult($parseTable, $automaton, $conflicts);
     }
 
     /**
      * Builds the handle-finding FSA from the grammar.
-     *
-     * @param Grammar $grammar The grammar.
-     *
-     * @return Automaton The resulting automaton.
      */
     protected function buildAutomaton(Grammar $grammar): Automaton
     {
@@ -49,6 +44,7 @@ class Analyzer
         $automaton = new Automaton();
 
         // the queue of states that need processing
+        /** @var SplQueue<State> $queue */
         $queue = new SplQueue();
 
         // the BST for state kernels
@@ -60,12 +56,11 @@ class Analyzer
         // FIRST sets of nonterminals
         $firstSets = $this->calculateFirstSets($groupedRules);
 
-        // keeps a list of tokens that need to be pumped
-        // through the automaton
+        // keeps a list of tokens that need to be pumped through the automaton
+        // @var list<array{0: Item, 1: string[]}>
         $pumpings = [];
 
-        // the item from which the whole automaton
-        // is derived
+        // the item from which the whole automaton is derived
         $initialItem = new Item($grammar->getStartRule(), 0);
 
         // construct the initial state
@@ -73,8 +68,7 @@ class Analyzer
             [$initialItem->getRule()->getNumber(), $initialItem->getDotIndex()],
         ]), [$initialItem]);
 
-        // the initial item automatically has EOF
-        // as its lookahead
+        // the initial item automatically has EOF as its lookahead
         $pumpings[] = [$initialItem, [Parser::EOF_TOKEN_TYPE]];
 
         $queue->enqueue($state);
@@ -84,12 +78,14 @@ class Analyzer
             $state = $queue->dequeue();
 
             // items of this state are grouped by
-            // the active component to calculate
-            // transitions easily
+            // the active component to calculate transitions easily
+            /** @var array<string, list<Item>> $groupedItems */
             $groupedItems = [];
 
             // calculate closure
+            /** @var list<string> $added */
             $added = [];
+            /** @var list<Item> $currentItems */
             $currentItems = $state->getItems();
             for ($x = 0; $x < count($currentItems); $x++) {
                 $item = $currentItems[$x];
@@ -102,6 +98,7 @@ class Analyzer
                     if ($grammar->hasNonterminal($component)) {
 
                         // calculate lookahead
+                        /** @var string[] $lookahead */
                         $lookahead = [];
                         $cs = $item->getUnrecognizedComponents();
 
@@ -123,7 +120,6 @@ class Analyzer
                                     break;
                                 } else {
                                     // if it does
-
                                     if ($i < (count($cs) - 1)) {
                                         // if more components ahead, remove epsilon
                                         unset($new[array_search(Grammar::EPSILON, $new)]);
@@ -156,7 +152,7 @@ class Analyzer
 
                         foreach ($groupedRules[$component] as $rule) {
                             if (!in_array($component, $added)) {
-                                // if $component hasn't yet been expaned,
+                                // if $component hasn't yet been expanded,
                                 // create new items for it
                                 $newItem = new Item($rule, 0);
 
@@ -187,6 +183,7 @@ class Analyzer
 
             // calculate transitions
             foreach ($groupedItems as $thisComponent => $theseItems) {
+                /** @var list<array{int, int}> $newKernel */
                 $newKernel = [];
 
                 foreach ($theseItems as $thisItem) {
@@ -215,7 +212,7 @@ class Analyzer
                     }
                 } else {
                     // new state needs to be created
-                    $newState = new State($num, array_map(function (Item $i) {
+                    $newState = new State($num, array_map(function (Item $i): Item {
                         $new = new Item($i->getRule(), $i->getDotIndex() + 1);
 
                         // connect the two items
@@ -233,8 +230,8 @@ class Analyzer
         }
 
         // pump all the lookahead tokens
-        foreach ($pumpings as $pumping) {
-            $pumping[0]->pumpAll($pumping[1]);
+        foreach ($pumpings as [$pumpItem, $pumpLookahead]) {
+            $pumpItem->pumpAll($pumpLookahead);
         }
 
         return $automaton;
@@ -243,16 +240,23 @@ class Analyzer
     /**
      * Encodes the handle-finding FSA as a LR parse table.
      *
-     *
-     * @return array The parse table.
+     * @return array{
+     *     array{action: array<int, array<string, int>>, goto: array<int, array<string, int>>},
+     *     list<array{state: int, lookahead: string, rule?: Rule, rules?: Rule[], resolution: int}>
+     * }
      */
     protected function buildParseTable(Automaton $automaton, Grammar $grammar): array
     {
         $conflictsMode = $grammar->getConflictsMode();
+
+        /** @var list<array{state: int, lookahead: string, rule?: Rule, rules?: Rule[], resolution: int}> $conflicts */
         $conflicts = [];
+
+        /** @var array<int, array<string, true>> $errors */
         $errors = [];
 
         // initialize the table
+        /** @var array{action: array<int, array<string, int>>, goto: array<int, array<string, int>>} $table */
         $table = [
             'action' => [],
             'goto' => [],
@@ -283,7 +287,6 @@ class Analyzer
                         if (isset($errors[$num]) && isset($errors[$num][$token])) {
                             // there was a previous conflict resolved as an error
                             // entry for this token.
-
                             continue;
                         }
 
@@ -336,8 +339,7 @@ class Analyzer
                                                     // the token is nonassociative.
                                                     // this actually means an input error, so
                                                     // remove the shift entry from the table
-                                                    // and mark this as an explicit error
-                                                    // entry
+                                                    // and mark this as an explicit error entry
                                                     unset($table['action'][$num][$token]);
                                                     $errors[$num][$token] = true;
                                                 }
@@ -423,6 +425,7 @@ class Analyzer
                                     } else {
                                         // new rule was earlier
                                         $table['action'][$num][$token] = -$ruleNumber;
+                                        $resolvedRules = [$newRule, $originalRule];
 
                                         $conflicts[] = [
                                             'state' => $num,
@@ -430,8 +433,6 @@ class Analyzer
                                             'rules' => $resolvedRules,
                                             'resolution' => Grammar::EARLIER_REDUCE,
                                         ];
-                                        $resolvedRules = [$newRule, $originalRule];
-
                                     }
                                     continue;
                                 }
@@ -459,13 +460,14 @@ class Analyzer
     /**
      * Calculates the FIRST sets of all nonterminals.
      *
-     * @param array $rules The rules grouped by the LHS.
+     * @param array<string, list<Rule>> $rules The rules grouped by the LHS.
      *
-     * @return array Calculated FIRST sets.
+     * @return array<string, string[]> Calculated FIRST sets.
      */
     protected function calculateFirstSets(array $rules): array
     {
         // initialize
+        /** @var array<string, string[]> $firstSets */
         $firstSets = [];
 
         foreach (array_keys($rules) as $lhs) {
@@ -478,6 +480,7 @@ class Analyzer
             foreach ($rules as $lhs => $ruleArray) {
                 foreach ($ruleArray as $rule) {
                     $components = $rule->getComponents();
+                    /** @var string[] $new */
                     $new = [];
 
                     if (empty($components)) {
